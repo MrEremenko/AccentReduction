@@ -4,8 +4,8 @@ require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const http = require('http');
-const facts = require('./routes/api/facts/facts');
 const user = require('./routes/api/user/user');
+const practice = require('./routes/api/practice/practice');
 var cors = require('cors');
 
 //redis stuff
@@ -47,7 +47,7 @@ app.use(passport.session());
 
 
 
-app.use('/api/facts', facts(passport));
+app.use('/api/practice', practice(passport));
 app.use('/api/user', user(passport));
 // app.use('/api/posts', posts());
 
