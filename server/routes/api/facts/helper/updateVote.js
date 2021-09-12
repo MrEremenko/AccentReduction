@@ -1,5 +1,5 @@
 var AWS = require('aws-sdk');
-var dynamodb = new AWS.DynamoDB({apiVersion: '2012-10-08', region: 'us-west-1'});
+var dynamodb = new AWS.DynamoDB({apiVersion: '2012-10-08', region: 'us-west-2'});
 
 
 const Redis = require("ioredis");

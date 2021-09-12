@@ -1,7 +1,7 @@
 var AWS = require('aws-sdk');
 const { default: axios } = require('axios');
 const { deleteItemParams, putItemParams } = require('../../helperMethods/dynamoParams');
-var dynamodb = new AWS.DynamoDB({apiVersion: '2012-10-08', region: 'us-west-1'});
+var dynamodb = new AWS.DynamoDB({apiVersion: '2012-10-08', region: 'us-west-2'});
 
 const Redis = require("ioredis");
 const client = new Redis(process.env.REDIS_PORT, process.env.REDIS_HOST); // uses defaults unless given configuration object

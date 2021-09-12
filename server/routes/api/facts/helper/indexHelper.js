@@ -1,6 +1,6 @@
 var AWS = require('aws-sdk');
 const { deleteItemParams } = require('../../helperMethods/dynamoParams');
-var dynamodb = new AWS.DynamoDB({apiVersion: '2012-10-08', region: 'us-west-1'});
+var dynamodb = new AWS.DynamoDB({apiVersion: '2012-10-08', region: 'us-west-2'});
 
 //this method takes in some text, namely a title or a description, and returns the array of
 //unrepeated, greater than 2 chars long words, which will be indexed into the database

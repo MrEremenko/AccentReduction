@@ -7,7 +7,7 @@ const translator = short();
 var AWS = require('aws-sdk');
 const { default: axios } = require("axios");
 AWS.config.update({region: 'us-west-2'});
-var dynamodb = new AWS.DynamoDB({apiVersion: '2012-10-08', region: 'us-west-1'});
+var dynamodb = new AWS.DynamoDB({apiVersion: '2012-10-08', region: 'us-west-2'});
 var Url = require('url-parse');
 const { clickLikeFact } = require("./helper/updateVote");
 
