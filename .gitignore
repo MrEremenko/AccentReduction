@@ -4,7 +4,7 @@ server/.env
 client/node_modules
 client/.pnp
 .pnp.js
-
+.wav
 # testing
 client/coverage
 
