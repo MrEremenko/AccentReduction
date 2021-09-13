@@ -14,7 +14,7 @@ const Redis = require("ioredis");
 const client = new Redis(process.env.REDIS_PORT, process.env.REDIS_HOST); // uses defaults unless given configuration object
 var mic = require('mic');
 var ffmpeg = require("ffmpeg");
-
+var spawn = require("child_process").spawn;
 const storage = multer.diskStorage({
   destination: "./audio/",
   filename: (req, file, cb) => {
@@ -44,8 +44,22 @@ router.post("/sentence", upload.single("sentence"), async (req, res) => {
   // outputFileStream.write(Buffer.from(new Uint8Array(req.file.buffer)));
 
   // fs.writeFileSync(outputFileStream, Buffer.from(new Uint8Array(req.file.buffer)));
+  let pronounciation = '';
+  var py = spawn("python", ["./recognizer/phonemeRecognizer.py", req.file.destination, req.file.filename]);
 
-  return res.status(200).json({success: true});
+  py.stdout.on('data', (data) => {
+    pronounciation += data.toString();
+  });
+
+  py.stderr.on("data", data => {
+    console.log(data.toString());
+  })
+
+  py.stdout.on('end', () => {
+    console.log("pronounciation =", pronounciation);
+    return res.status(200).json({ success: true, pronounciation });
+  })
+
 });
 
 
