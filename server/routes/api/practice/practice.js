@@ -14,7 +14,9 @@ const Redis = require("ioredis");
 const client = new Redis(process.env.REDIS_PORT, process.env.REDIS_HOST); // uses defaults unless given configuration object
 var mic = require('mic');
 var ffmpeg = require("ffmpeg");
+const utf8 = require("utf8");
 var spawn = require("child_process").spawn;
+const { exec } = require("child_process");
 const storage = multer.diskStorage({
   destination: "./audio/",
   filename: (req, file, cb) => {
@@ -47,17 +49,32 @@ router.post("/sentence", upload.single("sentence"), async (req, res) => {
   let pronounciation = '';
   var py = spawn("python", ["./recognizer/phonemeRecognizer.py", req.file.destination, req.file.filename]);
 
+  // exec(`python ./recognizer/phonemeRecognizer.py ${req.file.destination} ${req.file.filename}`, function (err, stdout, stderr) {
+  //   console.log(stderr);
+  //   console.log(stdout);
+  // });
+
   py.stdout.on('data', (data) => {
     pronounciation += data.toString();
   });
 
   py.stderr.on("data", data => {
-    console.log(data.toString());
+    // console.log(data.toString());
   })
 
   py.stdout.on('end', () => {
-    console.log("pronounciation =", pronounciation);
-    return res.status(200).json({ success: true, pronounciation });
+    console.log("Pronounciation ˠ =", pronounciation);
+    // pronounciation = utf8.decode(pronounciation);
+    // pronounciation = Buffer.from(pronounciation, 'utf-8').toString();
+    // console.log("This", utf8.encode("\xc9\x99"));
+    // console.log("and that", utf8.encode("\xc9\xb9\xcc\xa9"));
+
+    // pronounciation = pronounciation.toString().replaceAll(/(\\x\w\w){1,4}/g, x => { 
+    //   console.log(x)
+    //   return utf8.encode(x)
+    // });
+    console.log("Pronounciation ˠ =", pronounciation);
+    return res.status(200).json({ success: true });
   })
 
 });

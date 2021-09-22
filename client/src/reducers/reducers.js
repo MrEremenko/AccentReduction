@@ -1,7 +1,7 @@
 //combine all of our reducers
 import { combineReducers } from 'redux';
-import factReducer from './factReducer'
+import practiceReducer from './practiceReducer'
 
 export default combineReducers({
-  fact: factReducer,
+  practice: practiceReducer,
 })

@@ -3,58 +3,55 @@ import axios from 'axios'
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Search for the fact
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-export const SEARCHING_FACTS = 'SEARCHING_FACTS';
-export const searchingFacts = () => {
+export const UPLOAD_SENTENCE = 'UPLOAD_SENTENCE';
+export const uploadingSentence = () => {
   return {
-    type: SEARCHING_FACTS
+    type: UPLOAD_SENTENCE
   }
 }
 
-export const SEARCH_FACTS_SUCCESS = 'SEARCH_FACTS_SUCCESS';
-export const searchFactsSuccess = (facts) => {
+export const UPLOAD_SENTENCE_SUCCESS = 'UPLOAD_SENTENCE_SUCCESS';
+export const uploadSentenceSuccess = (data) => {
   return {
-    type: SEARCH_FACTS_SUCCESS,
-    facts
+    type: UPLOAD_SENTENCE_SUCCESS,
+    data
   }
 }
 
-export const SEARCH_FACTS_FAIL = 'SEARCH_FACTS_FAIL';
-export const searchFactsFail = (error) => {
+export const UPLOAD_SENTENCE_FAIL = 'UPLOAD_SENTENCE_FAIL';
+export const uploadSenteceFail = (error) => {
   return {
-    type: SEARCH_FACTS_FAIL,
+    type: UPLOAD_SENTENCE_FAIL,
     error
   }
 }
 
-export const SEARCH_FACTS_ERROR = 'SEARCH_FACTS_ERROR';
-export const searchFactsError = () => {
+export const UPLOAD_SENTENCE_ERROR = 'UPLOAD_SENTENCE_ERROR';
+export const uploadSentenceError = () => {
   return {
-    type: SEARCH_FACTS_ERROR
+    type: UPLOAD_SENTENCE_ERROR
   }
 }
 
-export const searchFact = (searchText) => {
+export const uploadSentence = (formData) => {
   return (dispatch, getState) => {
-    dispatch(searchingFacts());
-    if(searchText.trim() !== "") {
-      // console.log('searchText', searchText.split(/[ ,]+/));
-      let arr = searchText.split(/[ ,]+/);
-      let build = arr[0];
-      for(let i = 1; i < arr.length; i++) {
-        build += `+${arr[i]}`;
-      }
-      // console.log("build: ", build)
-      axios.get(`/api/facts/search?q=${build}`, {withCredentials: true})
-      .then(res => {
-        if(res.data.success)
-          dispatch(searchFactsSuccess(res.data.facts));
-        else
-          dispatch(searchFactsFail(res.data.error));
-      })
-      .catch((err) => {
-        dispatch(searchFactsError());
-      });
-    }
+    dispatch(uploadingSentence());
+    fetch("/api/practice/sentence", {
+      method: "POST",
+      body: formData
+    })
+    .then(res => res.json())
+    .then(res => {
+      console.log("AND THE DATA IS:", res.success);
+      if(res.success)
+        dispatch(uploadSentenceSuccess(res.pronounciation));
+      else
+        dispatch(uploadSentenceSuccess(res.data.error));
+    })
+    .catch((err) => {
+      console.log("Error is:", err);
+      dispatch(uploadSentenceError());
+    });
   }
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////

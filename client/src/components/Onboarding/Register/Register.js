@@ -96,7 +96,7 @@ const Register = ({ showRegister, setShowRegister }) => {
               {error}
             </div>
             }
-              <div style={{ margin: "20px 0px", display: "flex", justifyContent: "space-around" }}>
+              {/* <div style={{ margin: "20px 0px", display: "flex", justifyContent: "space-around" }}>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                   <input type="checkbox" checked={numbers}/>
                   <div>Number</div>
@@ -117,7 +117,7 @@ const Register = ({ showRegister, setShowRegister }) => {
                   <input type="checkbox" checked={minimum8}/>
                   <div>8+ characters</div>
                 </div>
-              </div>
+              </div> */}
               <input required="required" value={checkbox} onChange={e => setCheckbox(!checkbox)} type="checkbox"/><span>I have read the terms and conditions and privacy policy</span>
             </div>
             <button disabled={!readyToSubmit && checkbox && username.length > 2} type="submit" style={{ outline: "none", height: "67px", width: "211px", backgroundColor: (readyToSubmit && checkbox && username.length > 2) ? "#00b6fb" : "gray", borderRadius: "34px",

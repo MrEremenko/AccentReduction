@@ -10,4 +10,4 @@ model = read_recognizer("eng2102")
 
 # run inference -> æ l u s ɔ ɹ s
 val = model.recognize(sys.argv[1] + 'converted-' + sys.argv[2])
-print(val.encode('utf-8'))
+print(val.encode("utf-8"))
