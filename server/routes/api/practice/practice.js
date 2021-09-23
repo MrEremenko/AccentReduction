@@ -17,6 +17,7 @@ var ffmpeg = require("ffmpeg");
 const utf8 = require("utf8");
 var spawn = require("child_process").spawn;
 const { exec } = require("child_process");
+const { getPresignedPost } = require("./helper/presignedPost");
 const storage = multer.diskStorage({
   destination: "./audio/",
   filename: (req, file, cb) => {
@@ -59,7 +60,7 @@ router.post("/sentence", upload.single("sentence"), async (req, res) => {
   });
 
   py.stderr.on("data", data => {
-    // console.log(data.toString());
+    console.log(data.toString());
   })
 
   py.stdout.on('end', () => {
@@ -78,6 +79,17 @@ router.post("/sentence", upload.single("sentence"), async (req, res) => {
   })
 
 });
+
+// @route GET api/practice/presigned-post
+// @desc This returns a presigned-post
+// @access Private
+router.post("/presigned-post", async (req, res) => {
+  const data = await getPresignedPost(Date.now() + "");
+  console.log("Data is:", data);
+  return res.status(200).json({ success: true, data });
+});
+
+
 
 
 return router;

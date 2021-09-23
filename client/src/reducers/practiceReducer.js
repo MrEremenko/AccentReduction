@@ -5,6 +5,7 @@ const initialState = {
   uploadingSentence: false,
   showError: false,
   errorMessage: "",
+  presignedPostData: {}
 }
 
 export default function factReducer(state = initialState, action) {
@@ -19,6 +20,7 @@ export default function factReducer(state = initialState, action) {
       return {
         ...state,
         uploadingSentence: false,
+        presignedPostData: action.data
       }
     case UPLOAD_SENTENCE_FAIL:
       return {

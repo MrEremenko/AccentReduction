@@ -2,13 +2,15 @@ import {  useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { uploadSentence } from '../../actions/practiceActions';
 import mic from './mic.svg';
+import toWav from 'audiobuffer-to-wav';
+
 const Practice = () => {
   const dispatch = useDispatch();
   const [recording, setRecording] = useState(false);
 
   const isLoading = useSelector(state => state.practice.uploadingSentence);
 
-  const appendHeader = async (blob) => {
+  const appendHeader = (blob, cb) => {
     //Use http://soundfile.sapp.org/doc/WaveFormat/
     let headerSize = 44;  //44 bytes
     console.log(blob);
@@ -41,72 +43,75 @@ const Practice = () => {
     let Subchunk2Size = new Uint32Array(buffer, 40, 1);
 
     //Start the Riff chunk
-    ChunkID[0] = 0x52494646 ;  //RIFF in hexadecimal
-    console.log("ChunkId:", ChunkID);
+    // ChunkID[0] = 0x52494646 ;  //RIFF in hexadecimal
+    new DataView(buffer).setInt32(0, 0x52494646, false);
+    //console.log("ChunkId:", ChunkID);
     
     ChunkSize[0] = totalSize - 8;   //set the size
-    console.log("ChunkSize:", ChunkSize);
+    //console.log("ChunkSize:", ChunkSize);
 
     Format[0] = 0x57415645;
-    console.log("Format:", Format);
+    //console.log("Format:", Format);
 
     //Now start the "fmt" subchunk
     Subchunk1ID[0] = 0x666d7420;
-    console.log("Subchunk1ID:", Format);
+    //console.log("Subchunk1ID:", Format);
 
     Subchunk1Size[0] = 0x10000000;
-    console.log("Subchunk1Size:", Subchunk1Size);
+    //console.log("Subchunk1Size:", Subchunk1Size);
 
     AudioFormat[0] = 1;
-    console.log("AudioFormat:", AudioFormat);
+    //console.log("AudioFormat:", AudioFormat);
 
     NumChannels[0] = 1;
-    console.log("NumChannels:", NumChannels);
+    //console.log("NumChannels:", NumChannels);
 
     SampleRate[0] = 44100;
-    console.log("SampleRate:", SampleRate);
+    //console.log("SampleRate:", SampleRate);
     
     ByteRate[0] = SAMPLE_RATE * NUM_CHANNELS * BITS_PER_SAMPLE / 8;
-    console.log("ByteRate:", ByteRate);
+    //console.log("ByteRate:", ByteRate);
     
     BlockAlign[0] = NUM_CHANNELS * BITS_PER_SAMPLE / 8;
-    console.log("BlockAlign:", BlockAlign);
+    //console.log("BlockAlign:", BlockAlign);
     
     BitsPerSample[0] = BITS_PER_SAMPLE;
-    console.log("BitsPerSample:", BitsPerSample);
+    //console.log("BitsPerSample:", BitsPerSample);
 
     //Now the "data" sub chunk
     Subchunk2ID[0] = 0x64617461;
-    console.log("Subchunk2ID:", Subchunk2ID);
+    //console.log("Subchunk2ID:", Subchunk2ID);
     
     Subchunk2Size[0] = blob.size;
     
     //Final print out
-    let all = new Uint8Array(buffer);
+    let all = new Uint8Array(buffer).buffer;
     console.log("Final:", all);
 
     //Ok, now add in the actual data from the blob, and create a new blob, replacing the old one
     //CAUTION: can change to FileReader.readAsArrayBuffer() if compatability is a problem...
-    let audioFileBuffer = await blob.arrayBuffer();
-    // var audioFileBuffer;
-    // var fileReader = new FileReader();
-    // fileReader.onload = function(event) {
-    //     audioFileBuffer = event.target.result;
-    //     console.log("AudioFileBuffer:", audioFileBuffer);
-    // };
-    // fileReader.readAsArrayBuffer(blob);
-
+    // let audioFileBuffer = await blob.arrayBuffer();
+    var audioFileBuffer;
+    var fileReader = new FileReader();
+    fileReader.onload = function(event) {
+        audioFileBuffer = event.target.result;
+        let audioBuf = new Uint8Array(audioFileBuffer);
+        cb(new Blob([buffer, audioBuf], { type:'audio/wav' }));
+    };
+    fileReader.readAsArrayBuffer(blob);
 
     //ok, now create the new blob
-    blob = new Blob([buffer, audioFileBuffer]);
-    let test = await blob.arrayBuffer();
-    console.log("Test:", test);
+    // let arr = await blob.arrayBuffer();
+    // let ok = new Uint8Array(arr);
+    // console.log("Test:", ok);
   }
+  
 
   const notRecordingFunction = () => {
     navigator.mediaDevices.getUserMedia({ audio: true })
     .then(stream => {
-      const mediaRecorder = new MediaRecorder(stream);
+      // console.log(MediaRecorder.isTypeSupported('audio/webm;codecs=pcm'));
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
       const recordingMic = document.getElementById("recordingMic");
       
       setRecording(true);
@@ -120,13 +125,18 @@ const Practice = () => {
       
       mediaRecorder.addEventListener("stop", async () => {
         const audioBlob = new Blob(audioChunks);
-        const audioUrl = URL.createObjectURL(audioBlob);
-        const audio = new Audio(audioUrl);
         var formData = new FormData();
-        formData.append('sentence', audioBlob);
-        await appendHeader(audioBlob);
-        // dispatch(uploadSentence(formData));
-        // audio.play();
+        var audioContext = new (window.AudioContext || window.webkitAudioContext)()
+        audioContext.decodeAudioData(await audioBlob.arrayBuffer(), (buffer) => {
+          let okWhat = toWav(buffer);
+          let result = new Blob([new DataView(okWhat)], { type: "audio/wav" });
+          formData.append('sentence', result);
+          dispatch(uploadSentence({ formData, audioFile: result }));
+          
+        });
+        
+        // appendHeader(audioBlob, function(result) {
+        // });
       });
       
       
@@ -136,8 +146,6 @@ const Practice = () => {
       };
     });
   }
-
-
 
   return (
     <div style={{ height: "100%" }}>

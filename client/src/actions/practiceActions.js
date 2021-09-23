@@ -33,7 +33,7 @@ export const uploadSentenceError = () => {
   }
 }
 
-export const uploadSentence = (formData) => {
+export const uploadSentence = ({ formData, audioFile }) => {
   return (dispatch, getState) => {
     dispatch(uploadingSentence());
     fetch("/api/practice/sentence", {
@@ -41,12 +41,20 @@ export const uploadSentence = (formData) => {
       body: formData
     })
     .then(res => res.json())
-    .then(res => {
-      console.log("AND THE DATA IS:", res.success);
-      if(res.success)
-        dispatch(uploadSentenceSuccess(res.pronounciation));
-      else
+    .then(async res => {
+      if(res.success) {
+        const presignedPostData = res.data.presignedPostData;
+        try { 
+          await uploadFileToS3(presignedPostData, audioFile);
+          console.log("Upload file was a success!")
+        } catch(e) {
+          dispatch(uploadSenteceFail(res.data.error));
+        }
+        dispatch(uploadSentenceSuccess(res.data));
+      }
+      else {
         dispatch(uploadSentenceSuccess(res.data.error));
+      }
     })
     .catch((err) => {
       console.log("Error is:", err);
@@ -54,6 +62,34 @@ export const uploadSentence = (formData) => {
     });
   }
 }
+
+  /**
+  * Upload file to S3 with previously received pre-signed POST data.
+  * @param presignedPostData
+  * @param file
+  * @returns {Promise<any>}
+  */
+  const uploadFileToS3 = (presignedPostData, file) => {
+    return new Promise((resolve, reject) => {
+      const formData = new FormData();
+      Object.keys(presignedPostData.fields).forEach(key => {
+        formData.append(key, presignedPostData.fields[key]);
+      });
+      // Actual file has to be appended last.
+      formData.append("file", file);
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", presignedPostData.url, true);
+      xhr.send(formData);
+      xhr.onload = function() {
+        this.status === 204 ? resolve() : reject(this.responseText);
+      };
+    });
+  };
+
+
+
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Now post fact
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
