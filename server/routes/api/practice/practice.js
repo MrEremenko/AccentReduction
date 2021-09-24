@@ -85,7 +85,7 @@ router.post("/sentence", upload.single("sentence"), async (req, res) => {
 // @access Private
 router.post("/presigned-post", async (req, res) => {
   const data = await getPresignedPost(Date.now() + "");
-  console.log("Data is:", data);
+  // console.log("Data is:", data);
   return res.status(200).json({ success: true, data });
 });
 
