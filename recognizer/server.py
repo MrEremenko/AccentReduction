@@ -3,7 +3,7 @@ from flask import jsonify
 from flask import request
 
 from allosaurus.app import read_recognizer
-
+import os
 import boto3
 
 app = Flask(__name__)
@@ -20,6 +20,7 @@ def pronounce():
     model = read_recognizer("eng2102")
     # run inference -> æ l u s ɔ ɹ s
     val = model.recognize('./audio/' + data["file"] + ".wav")
+    os.remove('./audio/' + data["file"] + ".wav")
     return jsonify({'value': val})
 
 
