@@ -80,13 +80,38 @@ router.post("/sentence", upload.single("sentence"), async (req, res) => {
 
 });
 
-// @route GET api/practice/presigned-post
+// @route POST api/practice/presigned-post
 // @desc This returns a presigned-post
 // @access Private
 router.post("/presigned-post", async (req, res) => {
   const data = await getPresignedPost(Date.now() + "");
   console.log("Data is:", data);
   return res.status(200).json({ success: true, data });
+});
+
+
+// @route GET api/practice/pronounciation
+// @desc This returns the pronounciation based on the text and the name of the audio file
+// @access Private
+router.post("/pronounciation", async (req, res) => {
+  //first check if there is a sentence, and a name for the file that was uploaded
+  if(!req.body.sentence) {
+    return res.status(400).json({ error: true, message: "No sentence provided" })
+  }
+  if(!req.body.file) {
+    return res.status(400).json({ error: true, message: "No filename provided" })
+  }
+  //if both are valid, send it to the python server
+  console.log("About to hit the python server");
+  axios.post('http://localhost:3001/pronounciation', { sentence: req.body.sentence, file: req.body.file })
+  .then(response => {
+    console.log("Python server returned:", response.data);
+    return res.status(200).json({ success: true, response: response.data });
+  })
+  .catch(e => {
+    console.log(e);
+    return res.status(400).json({ success: false, message: "detecting pronounciation didn't work" });
+  });
 });
 
 

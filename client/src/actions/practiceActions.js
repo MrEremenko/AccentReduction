@@ -19,7 +19,7 @@ export const uploadSentenceSuccess = (data) => {
 }
 
 export const UPLOAD_SENTENCE_FAIL = 'UPLOAD_SENTENCE_FAIL';
-export const uploadSenteceFail = (error) => {
+export const uploadSentenceFail = (error) => {
   return {
     type: UPLOAD_SENTENCE_FAIL,
     error
@@ -36,7 +36,7 @@ export const uploadSentenceError = () => {
 export const uploadSentence = ({ formData, audioFile }) => {
   return (dispatch, getState) => {
     dispatch(uploadingSentence());
-    fetch("/api/practice/sentence", {
+    fetch("/api/practice/presigned-post", {
       method: "POST",
       body: formData
     })
@@ -46,9 +46,20 @@ export const uploadSentence = ({ formData, audioFile }) => {
         const presignedPostData = res.data.presignedPostData;
         try { 
           await uploadFileToS3(presignedPostData, audioFile);
-          console.log("Upload file was a success!")
+          console.log("Upload file was a success!");
+
+          //now since that is done, send a request to evaluate it and to provide a reply...
+          //TODO: break this up into its separate actions...
+          axios.post('/api/practice/pronounciation', { sentence: "The man is walking down the street", file: presignedPostData.fields.key })
+          .then(data => {
+            console.log("Got a return from the nodejs thing which returned a thing from the python server", data.data);
+          })
+          .catch(e => {
+            dispatch(uploadSentenceFail(res.data.error));
+          })
+
         } catch(e) {
-          dispatch(uploadSenteceFail(res.data.error));
+          dispatch(uploadSentenceFail(res.data.error));
         }
         dispatch(uploadSentenceSuccess(res.data));
       }

@@ -11,6 +11,9 @@ client/coverage
 # production
 client/build
 
+#python server
+recognizer/audio/
+
 # misc
 .DS_Store
 .env.local
