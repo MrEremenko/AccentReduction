@@ -14,6 +14,10 @@ client/build
 #python server
 recognizer/audio/
 
+.idea
+*.iml
+*/out
+
 # misc
 .DS_Store
 .env.local
