@@ -33,16 +33,29 @@ public class main {
             }
             System.out.println();
         });
+
         startProcess("./EN_US/given-updated.txt");
     }
 
     private static void startProcess(String filename) {
         //create file
+        ArrayList<String> createdProblemFor = new ArrayList<>();
         File f = new File(filename);
+        File lastFile = new File("./EN_US/last.txt");
+        PrintWriter last = null;
         //start try catch block
         int total = 0;
         int found = 0;
-        try(Scanner scan = new Scanner(f)) {
+        try(
+            Scanner scan = new Scanner(f);
+            Scanner lastReader = new Scanner(new File("./EN_US/last.txt"));
+        ) {
+            Set<String> old = new HashSet<>();
+            while(lastReader.hasNextLine()) {
+                old.add(lastReader.nextLine());
+            }
+             last = new PrintWriter(new FileWriter(lastFile));
+            //ok now I have all the previous words...
             while(scan.hasNextLine()) {
                 //Retrieve the word and pronunciation(s) from line & format everything
                 String[] l = scan.nextLine().replaceAll("['ˈˌ]", "").split("\\t");
@@ -56,17 +69,30 @@ public class main {
                 if(s != null) {
                     found++;
                 } else {
-                    System.out.println(word);
+                    System.out.println(word + " " + (total + 1));
+                    last.println(word);
+                    if(!old.contains(word)) {
+                        createdProblemFor.add(word);
+                    }
                 }
                 total++;
             }
         } catch(FileNotFoundException e) {
             e.printStackTrace();
+        } catch (IOException e) {
+            System.out.println("Could not write...");
+        } finally {
+            last.close();
         }
-        System.out.println("Total:\t" + total);
+        System.out.println();
+        System.out.println("Created a problem for the following words");
+        createdProblemFor.stream().forEach(System.out::println);
+        System.out.println();
+        System.out.println("\nTotal:\t" + total);
         System.out.println("Correct:\t" + found);
         System.out.println("Incorrect:\t" + (total - found));
         System.out.println(100.0 * found / total + "%");
+
     }
 
 
@@ -83,67 +109,13 @@ public class main {
         return null;
     }
 
-    private static boolean getWordPosition(String word, String pronunciation, Stack<String> positions) {
-        //counter for the word
-        int wordCounter = 0;
-        //counter for the ipa counter
-        int phonemeCounter = 0;
-        //grab the phoneme
-        //loop though the pronunciation_ to get the mapping to the characters unitl the end
-        while(phonemeCounter < pronunciation.length()) {
-            //Monophthongs
-            String phoneme = pronunciation.substring(phonemeCounter, phonemeCounter + 1);
-            //if it could be a diphthong
-            if(phonemeCounter < pronunciation.length() - 1 && graphemes.containsKey(pronunciation.substring(phonemeCounter, phonemeCounter + 2))) {
-                phoneme = pronunciation.substring(phonemeCounter, phonemeCounter + 2);
-            }
-            //if it doesn't exist
-            if(!graphemes.containsKey(phoneme)) {
-                System.out.println("OK dude, this phoneme doesn't exist, figure it out... " + phoneme);
-                return false;
-            }
-            //grab the list of graphemes for the said phoneme
-            ArrayList<String> graphemeList = graphemes.get(phoneme);
-
-            //now do manual checks
-
-            int longest = 0;
-            for(String graph : graphemeList) {
-                //if the grapheme fits into what is left of the word AND its equal
-                if(enoughSpace(word, wordCounter, graph) && word.substring(wordCounter, wordCounter + graph.length()).equals(graph)) {
-                    if(graph.length() > longest) {
-                        longest = graph.length();
-                    }
-                }
-
-            }
-            //ok, now we should have the largest # of phonemes that this phoneme takes up
-            if(longest == 0) {
-                System.out.println("NO CHARACTERS FOR SAID PHONEME....");
-                System.out.println("Word: " + word);
-                System.out.println("IPA: /" + pronunciation + "/");
-                System.out.println("Phoneme: " + phoneme);
-                System.out.println("Graphemes: " + graphemeList);
-                System.out.println("So far: " + positions + "\n");
-//                if(i == pronunciation.length() - 1)
-//                    return false;
-            }
-            //we just need to save this somewhere, and move forward the appropriate amount for the word and phoneme counter
-//            positions.add(longest);
-            phonemeCounter += phoneme.length();
-            wordCounter += longest;
-        }
-        System.out.println(word + "  /" + pronunciation + "/  " + positions);
-        phonemeCounter = 0;
-        return true;
-    }
-
     private static boolean recursiveSolution(String word, String pronunciation, int wordCounter,
     int pronunciationCounter, Stack<String> positions) {
         if(wordCounter == word.length() || pronunciationCounter == pronunciation.length()) {
              return true;
         }
         //do the different checks
+//        System.out.println(pronunciation + " " + pronunciationCounter);
         String phoneme = pronunciation.substring(pronunciationCounter, pronunciationCounter + 1);
         //if it could be a diphthong
         if(pronunciationCounter < pronunciation.length() - 1 && graphemes.containsKey(pronunciation.substring(pronunciationCounter, pronunciationCounter + 2))) {
@@ -156,27 +128,49 @@ public class main {
         }
         //grab the list of graphemes for the said phoneme
         ArrayList<String> graphemeList = graphemes.get(phoneme);
-//        System.out.println(wordCounter);
-//        System.out.println(positions);
         String letter = word.substring(wordCounter, wordCounter + 1);
 
+        ////////////////////////////////////////
+        // now come the special cases, need to sort these out...use a helper method to check if the pronunciation or word have the given letter(s)
+        ////////////////////////////////////////
 //        if(letter.equals("x")) { //ks or gz
 //
-//        } //this is
-//        else if(phoneme.equals("j") && enoughSpace(pronunciation, pronunciationCounter, "u") &&
-//        pronunciation.charAt(pronunciationCounter + 1) == 'u' && word.charAt(wordCounter) == 'u') {
-//            //if it is the /ju/ sound
-//            positions.push(wordCounter + "-" + (wordCounter + 1));
-//            positions.push(wordCounter + "-" + (wordCounter + 1));
-//            if(recursiveSolution(word, pronunciation, wordCounter + 1,
-//                    pronunciationCounter + phoneme.length(), positions)) {
-//                return true;
-//            } else {
-//                positions.pop();
-//                positions.pop();
-//            }
+//        }
+//        else
+//        if() {
+//            //if it is the <m> and /ɛm/
+//
 //        } else
-        {
+        if(
+            (stringContainsAt(pronunciation, pronunciationCounter, "wɑ") && stringContainsAt(word, wordCounter, "oi")) ||
+//            (stringContainsAt(pronunciation, pronunciationCounter, "eɪ") && stringContainsAt(word, wordCounter, "ai"))
+        ) {
+            positions.push(wordCounter + "-" + (wordCounter + 1));
+            positions.push(wordCounter + "-" + (wordCounter + 1));
+            if(recursiveSolution(word, pronunciation, wordCounter + 2, pronunciationCounter + 2, positions)) {
+                return true;
+            } else {
+                positions.pop();
+                positions.pop();
+            }
+        } else if( //if it is two phonemes per a single letter
+            (stringContainsAt(pronunciation, pronunciationCounter, "ju") && stringContainsAt(word, wordCounter, "u")) ||
+            (stringContainsAt(pronunciation, pronunciationCounter, "ɛm") && stringContainsAt(word, wordCounter, "m")) ||
+            (stringContainsAt(pronunciation, pronunciationCounter, "ʌm") && stringContainsAt(word, wordCounter, "m")) ||
+            (stringContainsAt(pronunciation, pronunciationCounter, "ɛs") && stringContainsAt(word, wordCounter, "s")) ||
+//            (stringContainsAt(pronunciation, pronunciationCounter, "eɪ") && stringContainsAt(word, wordCounter, "a")) ||
+            (stringContainsAt(pronunciation, pronunciationCounter, "ʌn") && stringContainsAt(word, wordCounter, "n"))
+        ) {
+            //if it is the /ju/ sound with the u in the string...
+            positions.push(Integer.toString(wordCounter));
+            positions.push(Integer.toString(wordCounter));
+            if(recursiveSolution(word, pronunciation, wordCounter + 1, pronunciationCounter + 2, positions)) {
+                return true;
+            } else {
+                positions.pop();
+                positions.pop();
+            }
+        } else {
             for(String graph : graphemeList) {
                 if(enoughSpace(word, wordCounter, graph)) {
                     String letters = word.substring(wordCounter, wordCounter + graph.length());
@@ -198,6 +192,18 @@ public class main {
         return false;
     }
 
+    public static boolean stringContainsAt(String original, int start, String sub) {
+        if(!enoughSpace(original, start, sub)) {
+            return false;
+        }
+        for(int o = start, s = 0; o < start + sub.length(); o++, s++) {
+            if(original.charAt(o) != sub.charAt(s)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private static int amountOfPhonemes(String pronunciation) {
         int counter = 0;
         int amount = 0;
@@ -214,7 +220,7 @@ public class main {
     }
 
     private static boolean enoughSpace(String word, int current, String more) {
-        return more.length() + current <= word.length();
+        return more.length() + current <= word.length() && current >= 0;
     }
 
     public static void convertGivenToSimple() {

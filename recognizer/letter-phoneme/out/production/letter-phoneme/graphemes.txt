@@ -4,11 +4,11 @@ aʊ ou ow ough owe
 ŋ ng n
 ʌ u ou o oo oe a au e
 tʃ ch tch c t+ure t+ion
-ɑ a al ea o
+ɑ a al ea o aa
 ʒ ge s g s+ion
 ɔ o a au oo oa aw ough augh ou
 ɔɪ oy oi
-ɛ e ea ai ay ue
+ɛ e ea ai ay ue aa
 ɝ ar er ir ur or
 ɡ g gg gu gue gh
 b b bb
@@ -16,7 +16,7 @@ d d dd de ld ed
 eɪ ai ei ea ey au a eigh
 f f ff lf fe ph
 æ a a_e ai ai ay eigh ey au
-i ea ee ie ei y e ey i eo
+i ea ee ie ei y e ey i eo iy
 aɪ i ei ai oi is igh uy ey y
 j y u io i e
 ɪ i y ui o u a
