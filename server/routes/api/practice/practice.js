@@ -6,18 +6,24 @@ var AWS = require('aws-sdk');
 const { default: axios } = require("axios");
 const multer  = require('multer');
 AWS.config.update({region: 'us-west-2'});
-const validateEmailInput = require("../../../validation/validEmail");
-var FileWriter = require('wav').FileWriter;
-var fs = require("fs");
-var ContentStream = require('contentstream');
 const Redis = require("ioredis");
+const validateEmailInput = require("../../../validation/validEmail");
+const { getPresignedPost } = require("./helper/presignedPost");
+const phrases = require("../../../language-info/EN_US/introductory-phrases.json");
+const another = require("../../../../recognizer/letter-phoneme/EN_US/final.json");
+
+//This is for file upload straight to the server...
+var fs = require("fs");
+var FileWriter = require('wav').FileWriter;
+var ContentStream = require('contentstream');
 const client = new Redis(process.env.REDIS_PORT, process.env.REDIS_HOST); // uses defaults unless given configuration object
 var mic = require('mic');
 var ffmpeg = require("ffmpeg");
 const utf8 = require("utf8");
 var spawn = require("child_process").spawn;
 const { exec } = require("child_process");
-const { getPresignedPost } = require("./helper/presignedPost");
+const { Word, convertSentenceToWordArray } = require("./helper/WordHelper");
+
 const storage = multer.diskStorage({
   destination: "./audio/",
   filename: (req, file, cb) => {
@@ -27,7 +33,6 @@ const storage = multer.diskStorage({
 
 // const storage = multer.memoryStorage()
 
-
 const upload = multer({ 
   storage,
   limits : { fileSize : 1000000 }
@@ -35,50 +40,50 @@ const upload = multer({
 
 module.exports = (passport) => {
 
-// @route POST api/practice/sentence
-// @desc This registers the user with the provided email, username and password
-// @access Private
-router.post("/sentence", upload.single("sentence"), async (req, res) => {
-  console.log("Received:", req.file);
-  // console.log("buffer", req.file.buffer)
-  // var outputFileStream = new FileWriter('./audio/test.wav', {
-  //   data: Buffer.from(new Uint8Array(req.file.buffer))
-  // });
-  // outputFileStream.write(Buffer.from(new Uint8Array(req.file.buffer)));
+// // @route POST api/practice/sentence
+// // @desc This registers the user with the provided email, username and password
+// // @access Private
+// router.post("/sentence", upload.single("sentence"), async (req, res) => {
+//   console.log("Received:", req.file);
+//   // console.log("buffer", req.file.buffer)
+//   // var outputFileStream = new FileWriter('./audio/test.wav', {
+//   //   data: Buffer.from(new Uint8Array(req.file.buffer))
+//   // });
+//   // outputFileStream.write(Buffer.from(new Uint8Array(req.file.buffer)));
 
-  // fs.writeFileSync(outputFileStream, Buffer.from(new Uint8Array(req.file.buffer)));
-  let pronounciation = '';
-  var py = spawn("python", ["./recognizer/phonemeRecognizer.py", req.file.destination, req.file.filename]);
+//   // fs.writeFileSync(outputFileStream, Buffer.from(new Uint8Array(req.file.buffer)));
+//   let pronounciation = '';
+//   var py = spawn("python", ["./recognizer/phonemeRecognizer.py", req.file.destination, req.file.filename]);
 
-  // exec(`python ./recognizer/phonemeRecognizer.py ${req.file.destination} ${req.file.filename}`, function (err, stdout, stderr) {
-  //   console.log(stderr);
-  //   console.log(stdout);
-  // });
+//   // exec(`python ./recognizer/phonemeRecognizer.py ${req.file.destination} ${req.file.filename}`, function (err, stdout, stderr) {
+//   //   console.log(stderr);
+//   //   console.log(stdout);
+//   // });
 
-  py.stdout.on('data', (data) => {
-    pronounciation += data.toString();
-  });
+//   py.stdout.on('data', (data) => {
+//     pronounciation += data.toString();
+//   });
 
-  py.stderr.on("data", data => {
-    console.log(data.toString());
-  })
+//   py.stderr.on("data", data => {
+//     console.log(data.toString());
+//   })
 
-  py.stdout.on('end', () => {
-    console.log("Pronounciation ˠ =", pronounciation);
-    // pronounciation = utf8.decode(pronounciation);
-    // pronounciation = Buffer.from(pronounciation, 'utf-8').toString();
-    // console.log("This", utf8.encode("\xc9\x99"));
-    // console.log("and that", utf8.encode("\xc9\xb9\xcc\xa9"));
+//   py.stdout.on('end', () => {
+//     console.log("Pronounciation ˠ =", pronounciation);
+//     // pronounciation = utf8.decode(pronounciation);
+//     // pronounciation = Buffer.from(pronounciation, 'utf-8').toString();
+//     // console.log("This", utf8.encode("\xc9\x99"));
+//     // console.log("and that", utf8.encode("\xc9\xb9\xcc\xa9"));
 
-    // pronounciation = pronounciation.toString().replaceAll(/(\\x\w\w){1,4}/g, x => { 
-    //   console.log(x)
-    //   return utf8.encode(x)
-    // });
-    console.log("Pronounciation ˠ =", pronounciation);
-    return res.status(200).json({ success: true });
-  })
+//     // pronounciation = pronounciation.toString().replaceAll(/(\\x\w\w){1,4}/g, x => { 
+//     //   console.log(x)
+//     //   return utf8.encode(x)
+//     // });
+//     console.log("Pronounciation ˠ =", pronounciation);
+//     return res.status(200).json({ success: true });
+//   })
 
-});
+// });
 
 // @route POST api/practice/presigned-post
 // @desc This returns a presigned-post
@@ -101,9 +106,20 @@ router.post("/pronounciation", async (req, res) => {
   if(!req.body.file) {
     return res.status(400).json({ error: true, message: "No filename provided" })
   }
+
+  let sentenceConversion = convertSentenceToWordArray(req.body.sentence);
+  if(!sentenceConversion.success) {
+    return res.status(400).json({ error: true, message: `${sentenceConversion.error} is currently not a word that is supported` })
+  }
+
+  let words = sentenceConversion.sentence;
+  for(let w of words) {
+    console.log(w);
+  }
+
   //if both are valid, send it to the python server
   console.log("About to hit the python server");
-  axios.post('http://localhost:3001/pronounciation', { sentence: req.body.sentence, file: req.body.file })
+  axios.post('http://localhost:3001/pronounciation', { sentence: sentenceConversion.simple, file: req.body.file })
   .then(response => {
     console.log("Python server returned:", response.data);
     return res.status(200).json({ success: true, response: response.data });
@@ -114,6 +130,14 @@ router.post("/pronounciation", async (req, res) => {
   });
 });
 
+
+router.get("/random-sentence", (req, res) => {
+  let word = new Word("\"Let's");
+  console.log(word);
+  let chosen = phrases[Math.floor(Math.random() * phrases.length)];
+  console.log("chosen:", chosen);
+  return res.status(200).json({ success: true, sentence: chosen });
+})
 
 
 

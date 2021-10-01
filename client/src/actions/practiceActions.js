@@ -33,7 +33,7 @@ export const uploadSentenceError = () => {
   }
 }
 
-export const uploadSentence = ({ formData, audioFile }) => {
+export const uploadSentence = ({ formData, audioFile, sentence }) => {
   return (dispatch, getState) => {
     dispatch(uploadingSentence());
     fetch("/api/practice/presigned-post", {
@@ -50,7 +50,7 @@ export const uploadSentence = ({ formData, audioFile }) => {
 
           //now since that is done, send a request to evaluate it and to provide a reply...
           //TODO: break this up into its separate actions...
-          axios.post('/api/practice/pronounciation', { sentence: "The man is walking down the street", file: presignedPostData.fields.key })
+          axios.post('/api/practice/pronounciation', { sentence, file: presignedPostData.fields.key })
           .then(data => {
             console.log("Got a return from the nodejs thing which returned a thing from the python server", data.data);
           })
@@ -104,56 +104,48 @@ export const uploadSentence = ({ formData, audioFile }) => {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Now post fact
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-export const POSTING_FACT = 'POSTING_FACT';
-export const postingFact = () => {
+export const RANDOM_SENTENCE = 'RANDOM_SENTENCE';
+export const randomSentence = () => {
   return {
-    type: POSTING_FACT
+    type: RANDOM_SENTENCE
   }
 }
 
-export const POST_FACT_SUCCESS = 'POST_FACT_SUCCESS';
-export const postFactSuccess = (fact) => {
+export const RANDOM_SENTENCE_SUCCESS = 'RANDOM_SENTENCE_SUCCESS';
+export const randomSentenceSuccess = (data) => {
   return {
-    type: POST_FACT_SUCCESS,
-    fact
+    type: RANDOM_SENTENCE_SUCCESS,
+    data
   }
 }
 
-export const POST_FACT_FAIL = 'POST_FACT_FAIL';
-export const postFactFail = (error) => {
+export const RANDOM_SENTENCE_FAIL = 'RANDOM_SENTENCE_FAIL';
+export const randomSentenceFail = () => {
   return {
-    type: POST_FACT_FAIL,
-    error
+    type: RANDOM_SENTENCE_FAIL
   }
 }
 
-export const POST_FACT_ERROR = 'POST_FACT_ERROR';
-export const postFactError = () => {
+export const RANDOM_SENTENCE_ERROR = 'RANDOM_SENTENCE_ERROR';
+export const randomSentenceError = () => {
   return {
-    type: POST_FACT_ERROR
+    type: RANDOM_SENTENCE_ERROR
   }
 }
 
-export const postFact = (fact) => {
-  return (dispatch, getState) => {
-    dispatch(postingFact());
+export const getRandomSentence = () => {
+  return (dispatch) => {
+    dispatch(randomSentence());
     //test that the fact is valid on the front end first
-    axios.post(`/api/facts/fact`, 
-    {
-      ...fact
-    }, 
-    { 
-      withCredentials: true 
-    })
+    axios.get(`/api/practice/random-sentence`)
     .then(res => {
-      console.log("GOT DATAAAAAA", res);
-      // if(res.data.success)
-      //   dispatch(postFactSuccess(res.data.fact));
-      // else
-      //   dispatch(postFactFail(res.data.error));
+      if(res.data.success)
+        dispatch(randomSentenceSuccess(res.data));
+      else
+        dispatch(randomSentenceFail(res.data.error));
     })
     .catch((err) => {
-      dispatch(postFactError());
+      dispatch(randomSentenceError());
     });
   }
 }

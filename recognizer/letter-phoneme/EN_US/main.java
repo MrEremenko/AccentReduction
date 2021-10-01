@@ -3,6 +3,12 @@ import java.io.*;
 
 public class main {
 
+    static private class Result {
+        public String word;
+        public String pronunciation;
+        public String[] positions;
+    }
+
     static HashMap<String, ArrayList<String>> graphemes = new HashMap<>();
 
     static {
@@ -42,6 +48,7 @@ public class main {
         ArrayList<String> createdProblemFor = new ArrayList<>();
         File f = new File(filename);
         File lastFile = new File("./EN_US/last.txt");
+        File finalFile = new File("./EN_US/final.json");
         PrintWriter last = null;
         //start try catch block
         int total = 0;
@@ -49,12 +56,16 @@ public class main {
         try(
             Scanner scan = new Scanner(f);
             Scanner lastReader = new Scanner(new File("./EN_US/last.txt"));
+            PrintWriter finalWrite = new PrintWriter(new FileWriter(finalFile));
         ) {
+            //Do a quick read from the old file
             Set<String> old = new HashSet<>();
             while(lastReader.hasNextLine()) {
                 old.add(lastReader.nextLine());
             }
-             last = new PrintWriter(new FileWriter(lastFile));
+            finalWrite.println("{");
+
+            last = new PrintWriter(new FileWriter(lastFile));
             //ok now I have all the previous words...
             while(scan.hasNextLine()) {
                 //Retrieve the word and pronunciation(s) from line & format everything
@@ -65,9 +76,28 @@ public class main {
                     pronunciations[i] = pronunciations[i].trim();
                 }
                 //get the positions for each word
-                Stack<String> s = getPositions(word, pronunciations);
+                PronunciationAndPositions s = getPositions(word, pronunciations);
+
                 if(s != null) {
+                    if(total > 0)
+                        finalWrite.println(",");
+                    String pro = s.pronunciation;
+                    String pos = s.positions;
                     found++;
+                    String[] vals = pos.split(" ");
+                    StringBuffer build = new StringBuffer();
+                    for(int i = 0; i < vals.length; i++) {
+                        String[] numbers = vals[i].split("-");
+                        if(i > 0)
+                            build.append(", ");
+                        if(numbers.length == 1) {
+                            build.append("{ \"s\": " ).append(numbers[0]).append(", \"e\": -1 }");
+                        } else {
+                            build.append("{ \"s\": " ).append(numbers[0]).append(", \"e\": ").append(numbers[1]).append(" }");
+                        }
+                    }
+                    finalWrite.print("\"" + word + "\": {\"pro\": \"" + pro + "\", \"pos\": [" + build.toString() + "] }");
+
                 } else {
                     System.out.println(word + " " + (total + 1));
                     last.println(word);
@@ -77,6 +107,7 @@ public class main {
                 }
                 total++;
             }
+            finalWrite.println("}");
         } catch(FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -95,15 +126,28 @@ public class main {
 
     }
 
+    private static class PronunciationAndPositions {
+        String pronunciation;
+        String positions;
+        public PronunciationAndPositions(String pronunciation, String positions) {
+            this.pronunciation = pronunciation;
+            this.positions = positions;
+        }
+    }
 
-    private static Stack<String> getPositions(String word, String[] pronunciations) {
+
+    private static PronunciationAndPositions getPositions(String word, String[] pronunciations) {
         //ok, now we have the word in 'word' and all of the pronunciations in the pronunciations array
         for(int i = 0; i < pronunciations.length; i++) {
             Stack<String> result = new Stack<>();
             if(recursiveSolution(word, pronunciations[i].substring(1, pronunciations[i].length() - 1), 0, 0, result)) {
 //                System.out.println(word);
 //                System.out.println(pronunciations[i]);
-                return result;
+                StringBuilder build = new StringBuilder();
+                for(String s : result) {
+                    build.append(s).append(" ");
+                }
+                return new PronunciationAndPositions(pronunciations[i], build.toString().trim());
             }
         }
         return null;
@@ -142,7 +186,7 @@ public class main {
 //
 //        } else
         if(
-            (stringContainsAt(pronunciation, pronunciationCounter, "wɑ") && stringContainsAt(word, wordCounter, "oi")) ||
+            (stringContainsAt(pronunciation, pronunciationCounter, "wɑ") && stringContainsAt(word, wordCounter, "oi"))
 //            (stringContainsAt(pronunciation, pronunciationCounter, "eɪ") && stringContainsAt(word, wordCounter, "ai"))
         ) {
             positions.push(wordCounter + "-" + (wordCounter + 1));

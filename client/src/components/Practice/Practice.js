@@ -1,13 +1,13 @@
 import {  useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { uploadSentence } from '../../actions/practiceActions';
+import { getRandomSentence, uploadSentence } from '../../actions/practiceActions';
 import mic from './mic.svg';
 import toWav from 'audiobuffer-to-wav';
 
 const Practice = () => {
   const dispatch = useDispatch();
   const [recording, setRecording] = useState(false);
-
+  const sentence = useSelector(state => state.practice.sentence);
   const isLoading = useSelector(state => state.practice.uploadingSentence);
 
   const appendHeader = (blob, cb) => {
@@ -131,7 +131,7 @@ const Practice = () => {
           let okWhat = toWav(buffer);
           let result = new Blob([new DataView(okWhat)], { type: "audio/wav" });
           formData.append('sentence', result);
-          dispatch(uploadSentence({ formData, audioFile: result }));
+          dispatch(uploadSentence({ formData, audioFile: result, sentence }));
           
         });
         
@@ -147,6 +147,10 @@ const Practice = () => {
     });
   }
 
+  useEffect(() => {
+    dispatch(getRandomSentence());
+  }, [])
+
   return (
     <div style={{ height: "100%" }}>
       <div style={{ height: "30vh", backgroundImage: "linear-gradient(#A5D4FF, #FFFFFF)", display: "flex", alignItems: "center", flexDirection: "column-reverse" }}>
@@ -155,7 +159,7 @@ const Practice = () => {
         </div>
       </div>
       <div style={{ height: "70vh", display: "flex", flexDirection: "column", alignItems: "center" }}>
-        <div style={{ fontFamily: "Cinzel", fontSize: "5vh", color: "#292929", margin: "5vh 0vh", textAlign: "center" }}>"The man is walking down the street"</div>
+        <div style={{ fontFamily: "Cinzel", fontSize: "5vh", color: "#292929", margin: "5vh 0vh", textAlign: "center" }}>{sentence}</div>
         <img id="notRecordingMic" src={mic} style={{ display: recording ? "none" : "block", borderStyle: "solid", borderRadius: "10vh", height: "10vh", width: "10vh", 
             cursor: "pointer", borderColor: "black" }} onClick={e => notRecordingFunction()}/>
         <img id="recordingMic" src={mic} style={{ display: !recording ? "none" : "block", borderStyle: "solid", borderRadius: "10vh", height: "10vh", width: "10vh", 

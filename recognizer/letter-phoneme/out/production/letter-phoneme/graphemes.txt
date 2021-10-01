@@ -3,12 +3,12 @@ aʊ ou ow ough owe
 ʊ oo u ou
 ŋ ng n
 ʌ u ou o oo oe a au e
-tʃ ch tch c t+ure t+ion
+tʃ ch tch c t+ure t+ion t
 ɑ a al ea o aa
 ʒ ge s g s+ion
-ɔ o a au oo oa aw ough augh ou
+ɔ o a au oo oa aw ough augh ou al
 ɔɪ oy oi
-ɛ e ea ai ay ue aa
+ɛ e ea ai ay ue aa a
 ɝ ar er ir ur or
 ɡ g gg gu gue gh
 b b bb
@@ -19,7 +19,7 @@ f f ff lf fe ph
 i ea ee ie ei y e ey i eo iy
 aɪ i ei ai oi is igh uy ey y
 j y u io i e
-ɪ i y ui o u a
+ɪ i y ui o u a e
 k c k ck ch cc que q
 ɫ l ll le il al el ul
 m m mm mb me mn

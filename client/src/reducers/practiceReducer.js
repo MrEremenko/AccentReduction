@@ -1,10 +1,12 @@
 import { UPLOAD_SENTENCE, UPLOAD_SENTENCE_SUCCESS, UPLOAD_SENTENCE_FAIL, UPLOAD_SENTENCE_ERROR } from '../actions/practiceActions';
+import { RANDOM_SENTENCE, RANDOM_SENTENCE_SUCCESS, RANDOM_SENTENCE_FAIL, RANDOM_SENTENCE_ERROR } from '../actions/practiceActions';
 
 //initial state, object
 const initialState = {
   uploadingSentence: false,
   showError: false,
   errorMessage: "",
+  sentence: "",
   presignedPostData: {}
 }
 
@@ -33,6 +35,11 @@ export default function factReducer(state = initialState, action) {
         ...state,
         errorMessage: action.error,
         showError: true
+      }
+    case RANDOM_SENTENCE_SUCCESS:
+      return {
+        ...state,
+        sentence: action.data.sentence
       }
     default:
       return state;
