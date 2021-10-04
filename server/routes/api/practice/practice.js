@@ -113,9 +113,9 @@ router.post("/pronounciation", async (req, res) => {
   }
 
   let words = sentenceConversion.sentence;
-  for(let w of words) {
-    console.log(w);
-  }
+  // for(let w of words) {
+  //   console.log(w);
+  // }
 
   //if both are valid, send it to the python server
   console.log("About to hit the python server");
